@@ -1,66 +1,32 @@
-const express = require("express");
-const bodyParser = require('body-parser');
-const axios = require('axios');
+var express = require('express')
+  , bodyParser = require('body-parser');
 
-const app = express().use(bodyParser.json());
+var app = express();
 
-app.listen(8000, () => {
-    console.log("webhook is listening");
+app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.json())
+
+app.get("/", function (request, response) {
+  response.send('Simple WhatsApp Webhook tester</br>There is no front-end, see server.js for implementation!');
 });
 
-const token = "EAAIqSsKeP0QBOZCXPRe2U4DKxdIXEBnSKpT6D1kWdbCG63cYZASyo1WjbdPnoFO7dfNsv7muvfwdiaa6FwlrnHgI63jxcrJnqnFHK0rVxnZAe7uo2KmSwxl23GfBggCJi3rOrkdaYFDdwWyl76rCq1ZAT9Dwl5PXFfnM1rSyYX9MsEjDKaOqJMVavj1PxKO6Xt0SrBmDZAaTRuuesSWcZD";
-const myToken = "sdhhijsfh";
-
-app.get("/webhook", (req, res) => {
-    let mode = req.query["hub.mode"];
-    let challenge = req.query["hub.challenge"];
-    let token = req.query["hub.verify_token"];
-    console.log(challenge);
-    if (mode && challenge) {
-        if (mode === "subscribe" && token === myToken) {
-            console.log(challenge);
-            res.status(200).send(challenge);
-        } else {
-            res.sendStatus(403);
-        }
-    }
-    else{
-        res.sendStatus(403);
-    }
+app.get('/webhook', function(req, res) {
+  if (
+    req.query['hub.mode'] == 'subscribe' &&
+    req.query['hub.verify_token'] == 'token'
+  ) {
+    res.send(req.query['hub.challenge']);
+  } else {
+    res.sendStatus(400);
+  }
 });
 
-app.post("/webhook", (req, res) => {
-    let bodyParam = req.body;
-
-    console.log(JSON.stringify(bodyParam, null, 2));
-
-    if (bodyParam.object === "page") {
-        if (bodyParam.entry &&
-            bodyParam.entry[0].changes &&
-            bodyParam.entry[0].changes[0].value.message &&
-            bodyParam.entry[0].changes[0].value.message[0]) {
-            let phoneNumberId = bodyParam.entry[0].changes[0].value.metadata.phone_number_id;
-            let from = bodyParam.entry[0].changes[0].value.message[0].from;
-            let msgBody = bodyParam.entry[0].changes[0].value.message[0].text;
-            axios({
-                method: "POST",
-                url: "https://graph.facebook.com/v13.0/" + phoneNumberId + "/message?access_token=" + token,
-                data: {
-                    messaging_type: "RESPONSE",
-                    message: {
-                        text: "Hi.. I'm Prasath"
-                    }
-                },
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            }).then(response => {
-                console.log("Message sent successfully:", response.data);
-            }).catch(error => {
-                console.error("Error sending message:", error);
-            });
-        }
-    }
-    res.status(200).send("EVENT_RECEIVED");
+app.post("/webhook", function (request, response) {
+  console.log(request.body);
+  console.log('Incoming webhook: ' + JSON.stringify(request.body));
+  response.sendStatus(200);
 });
 
+var listener = app.listen(process.env.PORT, function () {
+  console.log('Your app is listening on port ' + listener.address().port);
+});
