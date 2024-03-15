@@ -1,7 +1,7 @@
 const express = require("express");
 const body_parser = require('body-parser');
 
-const app = express.request(body_parser.json());
+const app = express.require(body_parser.json());
 
 app.listen(8000, () => {
     console.log("webhook is listning");
